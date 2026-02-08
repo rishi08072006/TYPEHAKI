@@ -44,23 +44,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Create or get user profile from Firestore
     const getOrCreateUserProfile = async (firebaseUser: User): Promise<UserProfile> => {
+        const cacheKey = `cachedProfile:${firebaseUser.uid}`;
+
         try {
             const userRef = doc(db, 'users', firebaseUser.uid);
             const userSnap = await getDoc(userRef);
 
             if (userSnap.exists()) {
-                console.log('Existing user profile found:', userSnap.data());
-                return userSnap.data() as UserProfile;
+                const profile = userSnap.data() as UserProfile;
+                try {
+                    localStorage.setItem(cacheKey, JSON.stringify(profile));
+                } catch (e) {
+                    // ignore localStorage errors
+                }
+                console.log('Existing user profile found:', profile);
+                return profile;
             }
 
             // Create new user profile
             const isAdminUser = firebaseUser.email ? ADMIN_EMAILS.includes(firebaseUser.email) : false;
-            console.log('Creating new profile for:', {
-                email: firebaseUser.email,
-                isAdmin: isAdminUser,
-                adminEmails: ADMIN_EMAILS
-            });
-
             const newProfile: UserProfile = {
                 uid: firebaseUser.uid,
                 email: firebaseUser.email || '',
@@ -80,11 +82,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 createdAt: serverTimestamp(),
             });
 
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify(newProfile));
+            } catch (e) {
+                // ignore localStorage errors
+            }
+
             console.log('Profile created successfully:', newProfile);
             return newProfile;
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error in getOrCreateUserProfile:', error);
-            throw error;
+
+            // If the client is offline, try to return a cached profile from localStorage
+            const cached = (() => {
+                try {
+                    const raw = localStorage.getItem(cacheKey);
+                    return raw ? (JSON.parse(raw) as UserProfile) : null;
+                } catch (e) {
+                    return null;
+                }
+            })();
+
+            if (cached) {
+                console.warn('Using cached user profile due to offline error');
+                return cached;
+            }
+
+            // If no cached profile, create a minimal local profile so app can continue
+            const fallbackProfile: UserProfile = {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email || '',
+                name: firebaseUser.displayName || '',
+                avatar: firebaseUser.photoURL || '',
+                mobile: '',
+                college: '',
+                branch: '',
+                section: '',
+                rollNumber: '',
+                role: (firebaseUser.email && ADMIN_EMAILS.includes(firebaseUser.email)) ? 'admin' : 'user',
+                createdAt: new Date(),
+            };
+
+            // Do not attempt to write to Firestore while offline; just return fallback.
+            return fallbackProfile;
         }
     };
 
