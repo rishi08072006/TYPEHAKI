@@ -84,6 +84,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 try {
                     const profile = await getOrCreateUserProfile(firebaseUser);
                     setUserProfile(profile);
+                    const isAdminCheck = profile.email ? ADMIN_EMAILS.includes(profile.email) : false;
+                    console.log('User logged in:', {
+                        email: firebaseUser.email,
+                        role: profile.role,
+                        isAdmin: isAdminCheck,
+                        adminEmails: ADMIN_EMAILS
+                    });
                 } catch (error) {
                     console.error('Error fetching user profile:', error);
                     setUserProfile(null);
