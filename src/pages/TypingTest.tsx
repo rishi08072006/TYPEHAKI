@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ export default function TypingTest() {
   const [accuracy, setAccuracy] = useState(100);
   const [isCompetition, setIsCompetition] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const text = sampleTypingText;
 
@@ -65,10 +66,25 @@ export default function TypingTest() {
     return () => clearInterval(timer);
   }, [status]);
 
+  // Debounce stat calculations to reduce re-renders (only update every 50ms during typing)
   useEffect(() => {
-    if (status === "typing") {
-      calculateStats();
+    if (status !== "typing") return;
+
+    // Clear existing timeout
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
+
+    // Set new timeout for debounced calculation
+    debounceRef.current = setTimeout(() => {
+      calculateStats();
+    }, 50);
+
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
   }, [typedText, status, calculateStats]);
 
   useEffect(() => {
@@ -118,7 +134,8 @@ export default function TypingTest() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const renderText = () => {
+  // Memoize rendered text to prevent unnecessary re-renders
+  const renderedText = useMemo(() => {
     return text.split("").map((char, index) => {
       let className = "text-muted-foreground";
 
@@ -143,7 +160,9 @@ export default function TypingTest() {
         </span>
       );
     });
-  };
+  }, [typedText, text]);
+
+  const renderText = () => renderedText;
 
   return (
     <Layout showFooter={false}>

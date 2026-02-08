@@ -6,7 +6,7 @@ import {
     onAuthStateChanged
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db, googleProvider, ADMIN_EMAIL } from '@/lib/firebase';
+import { auth, db, googleProvider, ADMIN_EMAILS } from '@/lib/firebase';
 
 // User profile stored in Firestore
 export interface UserProfile {
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [loading, setLoading] = useState(true);
 
     // Check if current user is admin
-    const isAdmin = userProfile?.role === 'admin' || user?.email === ADMIN_EMAIL;
+    const isAdmin = userProfile?.role === 'admin' || (user?.email ? ADMIN_EMAILS.includes(user.email) : false);
 
     // Create or get user profile from Firestore
     const getOrCreateUserProfile = async (firebaseUser: User): Promise<UserProfile> => {
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // Create new user profile
-        const isAdminUser = firebaseUser.email === ADMIN_EMAIL;
+        const isAdminUser = firebaseUser.email ? ADMIN_EMAILS.includes(firebaseUser.email) : false;
         const newProfile: UserProfile = {
             uid: firebaseUser.uid,
             email: firebaseUser.email || '',

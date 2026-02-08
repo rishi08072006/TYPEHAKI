@@ -73,6 +73,7 @@ export default function Admin() {
         duration: parseInt(newRound.duration) || 60,
         typingText: newRound.typingText,
         status: 'upcoming',
+        type: 'tournament', // tournaments created via admin panel
         createdBy: user?.uid || '',
       });
 

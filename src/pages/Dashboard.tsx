@@ -5,12 +5,12 @@ import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, Users, Trophy, IndianRupee, Loader2 } from "lucide-react";
+import { Calendar, Clock, Users, Trophy, IndianRupee, Loader2, Plus, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRounds, useUserHistory } from "@/hooks/useFirestore";
 
 export default function Dashboard() {
-  const { userProfile, user } = useAuth();
+  const { userProfile, user, isAdmin } = useAuth();
   const { rounds, loading: roundsLoading } = useRounds();
   const { attempts, loading: historyLoading } = useUserHistory();
 
@@ -69,12 +69,45 @@ export default function Dashboard() {
               <h1 className="text-3xl font-bold">Welcome back, {firstName}!</h1>
               <p className="text-muted-foreground mt-1">Ready to compete? Check out the available rounds below.</p>
             </div>
-            <Link to="/typing-test">
-              <Button variant="hero" size="lg">
-                Practice Typing
-              </Button>
-            </Link>
+            <div className="flex gap-3">
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button variant="default" size="lg" className="gap-2">
+                    <Plus className="h-5 w-5" />
+                    Create Tournament
+                  </Button>
+                </Link>
+              )}
+              <Link to="/typing-test">
+                <Button variant="hero" size="lg">
+                  Practice Typing
+                </Button>
+              </Link>
+            </div>
           </div>
+
+          {/* Admin Badge */}
+          {isAdmin && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card className="bg-primary/5 border-primary/20">
+                <CardContent className="pt-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Shield className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">Admin Access</p>
+                      <p className="text-sm text-muted-foreground">You have access to admin features. Click "Create Tournament" to manage competitions.</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
           {/* Stats Overview */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

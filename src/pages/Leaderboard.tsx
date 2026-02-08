@@ -34,7 +34,10 @@ export default function Leaderboard() {
     : null;
 
   // Auto-select first closed round if none selected
-  const closedRounds = rounds.filter(r => r.status === 'closed' || r.status === 'active');
+  const closedRounds = rounds.filter(r => (r.status === 'closed' || r.status === 'active') && r.type === 'tournament');
+  
+  // Filter to show only tournament rounds
+  const tournamentRounds = rounds.filter(r => r.type === 'tournament');
 
   if (roundsLoading) {
     return (
@@ -58,7 +61,7 @@ export default function Leaderboard() {
           <div className="text-center space-y-2">
             <h1 className="text-3xl font-bold">Leaderboard</h1>
             <p className="text-muted-foreground">
-              Top performers from typing competitions
+              Top performers from typing tournaments
             </p>
           </div>
 
@@ -68,16 +71,16 @@ export default function Leaderboard() {
               <CardTitle className="text-lg">Select Round</CardTitle>
             </CardHeader>
             <CardContent>
-              {rounds.length === 0 ? (
-                <p className="text-muted-foreground">No rounds available yet.</p>
+              {tournamentRounds.length === 0 ? (
+                <p className="text-muted-foreground">No tournaments available yet.</p>
               ) : (
                 <select
                   className="w-full p-2 rounded-md bg-background border border-border"
                   value={selectedRoundId}
                   onChange={(e) => setSelectedRoundId(e.target.value)}
                 >
-                  <option value="">Select a round to view leaderboard...</option>
-                  {rounds.map((round) => (
+                  <option value="">Select a tournament to view leaderboard...</option>
+                  {tournamentRounds.map((round) => (
                     <option key={round.id} value={round.id}>
                       {round.name} ({round.status})
                     </option>

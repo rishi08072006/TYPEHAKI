@@ -4,13 +4,13 @@ import { getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDa9MLgiLJNsz7lZm5h0Wsjbj3tArqjWqE",
-    authDomain: "typehaki.firebaseapp.com",
-    projectId: "typehaki",
-    storageBucket: "typehaki.firebasestorage.app",
-    messagingSenderId: "1007975808147",
-    appId: "1:1007975808147:web:fa5492154e7b4ad40fa166",
-    measurementId: "G-G99XM7MZ6M"
+    apiKey: "AIzaSyBjNR3EG8aDlEgV2u6nXOvQHwop-NjLKZ0",
+    authDomain: "typehaki-fdba0.firebaseapp.com",
+    projectId: "typehaki-fdba0",
+    storageBucket: "typehaki-fdba0.firebasestorage.app",
+    messagingSenderId: "635541189448",
+    appId: "1:635541189448:web:8d887eec0e6ee21cccf97d",
+    measurementId: "G-G0CZYKDKHH"
 };
 
 // Initialize Firebase
@@ -24,7 +24,13 @@ export const functions = getFunctions(app);
 // Providers
 export const googleProvider = new GoogleAuthProvider();
 
-// Admin email - single admin for TypeHaki
-export const ADMIN_EMAIL = "sathwikprabhu07@gmail.com";
+// Admin emails - multiple admins for TypeHaki
+export const ADMIN_EMAILS = [
+  "sathwikprabhu07@gmail.com",
+  "rishikonda678@gmail.com"
+];
+
+// For backward compatibility
+export const ADMIN_EMAIL = ADMIN_EMAILS[0];
 
 export default app;

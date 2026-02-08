@@ -49,9 +49,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/80 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
-          <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-            <Keyboard className="h-5 w-5 text-primary" />
-          </div>
+          <img src="/typehaki-icon.ico" alt="TypeHaki" className="h-10 w-10 rounded-md object-cover" />
           <span className="text-xl font-bold tracking-tight">
             Type<span className="text-primary">Haki</span>
           </span>

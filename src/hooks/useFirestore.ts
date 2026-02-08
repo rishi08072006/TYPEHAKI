@@ -30,6 +30,7 @@ export interface Round {
     typingText: string;
     duration: number; // in seconds
     status: 'upcoming' | 'registration_open' | 'active' | 'closed';
+    type: 'tournament' | 'practice'; // 'tournament' for competitions, 'practice' for general practice
     participantCount: number;
     createdAt: Date;
     createdBy: string;
@@ -87,36 +88,37 @@ function docToRound(id: string, data: DocumentData): Round {
         typingText: data.typingText || '',
         duration: data.duration || 60,
         status: data.status || 'upcoming',
+        type: data.type || 'tournament', // default to tournament for backward compatibility
         participantCount: data.participantCount || 0,
         createdAt: toDate(data.createdAt),
         createdBy: data.createdBy || '',
     };
 }
 
-// Hook to fetch all rounds
+// Hook to fetch all rounds (one-time read for better performance)
 export function useRounds() {
     const [rounds, setRounds] = useState<Round[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
-        const roundsRef = collection(db, 'rounds');
-        const q = query(roundsRef, orderBy('createdAt', 'desc'));
-
-        const unsubscribe = onSnapshot(q,
-            (snapshot) => {
+        const fetchRounds = async () => {
+            try {
+                const roundsRef = collection(db, 'rounds');
+                const q = query(roundsRef, orderBy('createdAt', 'desc'));
+                const snapshot = await getDocs(q);
+                
                 const roundsData = snapshot.docs.map(doc => docToRound(doc.id, doc.data()));
                 setRounds(roundsData);
                 setLoading(false);
-            },
-            (err) => {
+            } catch (err) {
                 console.error('Error fetching rounds:', err);
-                setError(err);
+                setError(err instanceof Error ? err : new Error('Unknown error'));
                 setLoading(false);
             }
-        );
+        };
 
-        return () => unsubscribe();
+        fetchRounds();
     }, []);
 
     return { rounds, loading, error };
@@ -158,7 +160,7 @@ export function useRound(roundId: string) {
     return { round, loading, error };
 }
 
-// Hook to fetch leaderboard for a round
+// Hook to fetch leaderboard for a round (one-time read)
 export function useLeaderboard(roundId: string) {
     const [entries, setEntries] = useState<Attempt[]>([]);
     const [loading, setLoading] = useState(true);
@@ -170,15 +172,16 @@ export function useLeaderboard(roundId: string) {
             return;
         }
 
-        const attemptsRef = collection(db, 'attempts');
-        const q = query(
-            attemptsRef,
-            where('roundId', '==', roundId),
-            orderBy('score', 'desc')
-        );
-
-        const unsubscribe = onSnapshot(q,
-            (snapshot) => {
+        const fetchLeaderboard = async () => {
+            try {
+                const attemptsRef = collection(db, 'attempts');
+                const q = query(
+                    attemptsRef,
+                    where('roundId', '==', roundId),
+                    orderBy('score', 'desc')
+                );
+                const snapshot = await getDocs(q);
+                
                 const attemptsData = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
@@ -187,15 +190,14 @@ export function useLeaderboard(roundId: string) {
                 } as Attempt));
                 setEntries(attemptsData);
                 setLoading(false);
-            },
-            (err) => {
+            } catch (err) {
                 console.error('Error fetching leaderboard:', err);
-                setError(err);
+                setError(err instanceof Error ? err : new Error('Unknown error'));
                 setLoading(false);
             }
-        );
+        };
 
-        return () => unsubscribe();
+        fetchLeaderboard();
     }, [roundId]);
 
     return { entries, loading, error };
@@ -296,7 +298,7 @@ export function useAttempt(roundId: string) {
     return { attempt, loading, error };
 }
 
-// Hook to fetch user's competition history
+// Hook to fetch user's competition history (one-time read)
 export function useUserHistory() {
     const { user } = useAuth();
     const [attempts, setAttempts] = useState<Attempt[]>([]);
@@ -309,15 +311,16 @@ export function useUserHistory() {
             return;
         }
 
-        const attemptsRef = collection(db, 'attempts');
-        const q = query(
-            attemptsRef,
-            where('userId', '==', user.uid),
-            orderBy('submittedAt', 'desc')
-        );
-
-        const unsubscribe = onSnapshot(q,
-            (snapshot) => {
+        const fetchUserHistory = async () => {
+            try {
+                const attemptsRef = collection(db, 'attempts');
+                const q = query(
+                    attemptsRef,
+                    where('userId', '==', user.uid),
+                    orderBy('submittedAt', 'desc')
+                );
+                const snapshot = await getDocs(q);
+                
                 const attemptsData = snapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data(),
@@ -326,15 +329,14 @@ export function useUserHistory() {
                 } as Attempt));
                 setAttempts(attemptsData);
                 setLoading(false);
-            },
-            (err) => {
+            } catch (err) {
                 console.error('Error fetching user history:', err);
-                setError(err);
+                setError(err instanceof Error ? err : new Error('Unknown error'));
                 setLoading(false);
             }
-        );
+        };
 
-        return () => unsubscribe();
+        fetchUserHistory();
     }, [user]);
 
     return { attempts, loading, error };
