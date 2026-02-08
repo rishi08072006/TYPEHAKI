@@ -1,5 +1,5 @@
 // Service Worker for offline caching and performance
-const CACHE_NAME = 'typehaki-v1';
+const CACHE_NAME = 'typehaki-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

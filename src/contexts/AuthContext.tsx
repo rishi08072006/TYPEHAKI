@@ -44,35 +44,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Create or get user profile from Firestore
     const getOrCreateUserProfile = async (firebaseUser: User): Promise<UserProfile> => {
-        const userRef = doc(db, 'users', firebaseUser.uid);
-        const userSnap = await getDoc(userRef);
+        try {
+            const userRef = doc(db, 'users', firebaseUser.uid);
+            const userSnap = await getDoc(userRef);
 
-        if (userSnap.exists()) {
-            return userSnap.data() as UserProfile;
+            if (userSnap.exists()) {
+                console.log('Existing user profile found:', userSnap.data());
+                return userSnap.data() as UserProfile;
+            }
+
+            // Create new user profile
+            const isAdminUser = firebaseUser.email ? ADMIN_EMAILS.includes(firebaseUser.email) : false;
+            console.log('Creating new profile for:', {
+                email: firebaseUser.email,
+                isAdmin: isAdminUser,
+                adminEmails: ADMIN_EMAILS
+            });
+
+            const newProfile: UserProfile = {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email || '',
+                name: firebaseUser.displayName || '',
+                avatar: firebaseUser.photoURL || '',
+                mobile: '',
+                college: '',
+                branch: '',
+                section: '',
+                rollNumber: '',
+                role: isAdminUser ? 'admin' : 'user',
+                createdAt: new Date(),
+            };
+
+            await setDoc(userRef, {
+                ...newProfile,
+                createdAt: serverTimestamp(),
+            });
+
+            console.log('Profile created successfully:', newProfile);
+            return newProfile;
+        } catch (error) {
+            console.error('Error in getOrCreateUserProfile:', error);
+            throw error;
         }
-
-        // Create new user profile
-        const isAdminUser = firebaseUser.email ? ADMIN_EMAILS.includes(firebaseUser.email) : false;
-        const newProfile: UserProfile = {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email || '',
-            name: firebaseUser.displayName || '',
-            avatar: firebaseUser.photoURL || '',
-            mobile: '',
-            college: '',
-            branch: '',
-            section: '',
-            rollNumber: '',
-            role: isAdminUser ? 'admin' : 'user',
-            createdAt: new Date(),
-        };
-
-        await setDoc(userRef, {
-            ...newProfile,
-            createdAt: serverTimestamp(),
-        });
-
-        return newProfile;
     };
 
     // Listen to auth state changes

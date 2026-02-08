@@ -23,6 +23,17 @@ export function Header() {
   const isLoggedIn = !!user;
 
   useEffect(() => {
+    console.log('Header auth state:', {
+      isLoggedIn,
+      userEmail: user?.email,
+      isAdmin,
+      userRole: userProfile?.role,
+      displayName,
+      displayEmail
+    });
+  }, [isLoggedIn, user, isAdmin, userProfile]);
+
+  useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
