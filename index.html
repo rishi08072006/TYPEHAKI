@@ -14,8 +14,16 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@TypeHaki" />
     
+    <!-- Preconnect to Firebase and Google APIs -->
+    <link rel="preconnect" href="https://typehaki-fdba0.firebaseapp.com" crossorigin />
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
+    
     <link rel="icon" type="image/x-icon" href="/typehaki-icon.ico" />
     <link rel="alternate icon" href="/typehaki-logo.png" />
+    
+    <!-- Prefetch critical pages -->
+    <link rel="prefetch" href="/dashboard" as="document" />
   </head>
 
   <body>

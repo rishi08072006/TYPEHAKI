@@ -6,6 +6,7 @@ import {
     getDoc,
     addDoc,
     updateDoc,
+    deleteDoc,
     query,
     where,
     orderBy,
@@ -359,6 +360,31 @@ export async function createRound(roundData: Omit<Round, 'id' | 'createdAt' | 'p
 export async function updateRound(roundId: string, updates: Partial<Round>) {
     const roundRef = doc(db, 'rounds', roundId);
     await updateDoc(roundRef, updates);
+}
+
+// Admin: Delete a round and associated data
+export async function deleteRound(roundId: string) {
+    // Delete registrations
+    const registrationsRef = collection(db, 'registrations');
+    const regQuery = query(registrationsRef, where('roundId', '==', roundId));
+    const regSnapshot = await getDocs(regQuery);
+    
+    for (const regDoc of regSnapshot.docs) {
+        await deleteDoc(regDoc.ref);
+    }
+
+    // Delete attempts
+    const attemptsRef = collection(db, 'attempts');
+    const attQuery = query(attemptsRef, where('roundId', '==', roundId));
+    const attSnapshot = await getDocs(attQuery);
+    
+    for (const attDoc of attSnapshot.docs) {
+        await deleteDoc(attDoc.ref);
+    }
+
+    // Delete the round itself
+    const roundRef = doc(db, 'rounds', roundId);
+    await deleteDoc(roundRef);
 }
 
 // Create registration

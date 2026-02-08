@@ -10,6 +10,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   LayoutDashboard,
   Trophy,
   Users,
@@ -18,9 +27,10 @@ import {
   Keyboard,
   Settings,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from "lucide-react";
-import { useRounds, useLeaderboard, createRound, Round } from "@/hooks/useFirestore";
+import { useRounds, useLeaderboard, createRound, deleteRound, Round } from "@/hooks/useFirestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { Timestamp } from "firebase/firestore";
@@ -32,6 +42,8 @@ export default function Admin() {
   const [selectedRoundId, setSelectedRoundId] = useState<string>("");
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [newRound, setNewRound] = useState({
     name: "",
@@ -97,6 +109,19 @@ export default function Admin() {
       setCreateError(err instanceof Error ? err.message : 'Failed to create round');
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleDeleteRound = async (roundId: string) => {
+    setIsDeleting(true);
+    try {
+      await deleteRound(roundId);
+      setDeleteConfirm(null);
+    } catch (err) {
+      console.error('Error deleting round:', err);
+      alert('Failed to delete tournament: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -238,7 +263,7 @@ export default function Admin() {
                       No rounds created yet.
                     </div>
                   ) : (
-                    <Table>
+                      <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Round Name</TableHead>
@@ -247,6 +272,7 @@ export default function Admin() {
                           <TableHead>Prize Pool</TableHead>
                           <TableHead>Participants</TableHead>
                           <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -258,6 +284,18 @@ export default function Admin() {
                             <TableCell className="text-primary font-medium">₹{round.prizePool.toLocaleString()}</TableCell>
                             <TableCell>{round.participantCount}</TableCell>
                             <TableCell>{getStatusBadge(round.status)}</TableCell>
+                            <TableCell>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => setDeleteConfirm(round.id)}
+                                disabled={isDeleting}
+                                className="gap-2"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
@@ -490,6 +528,29 @@ export default function Admin() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={(open) => !open && setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Tournament?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the tournament and all associated registrations and attempts. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex gap-2">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteConfirm && handleDeleteRound(deleteConfirm)}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? <Loader2 className="h-4 w-4 mr-2 animate-spin inline" /> : null}
+              Delete
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
